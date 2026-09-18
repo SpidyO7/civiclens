@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateIncident, getIncidentById, getIncidentByIncidentId, addStatusHistory, createNotification, createResolution } from '@/lib/db/queries';
 import { getCurrentUserId } from '@/lib/auth';
+import { persistStore } from '@/lib/db';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -13,9 +14,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const resolution = createResolution({
       incidentId: incident.id,
       resolvedBy: userId,
-      resolutionNote: note,
-      imageUrl,
-      resolvedAt: new Date()
+      note,
+      imageUrl
     });
     
     addStatusHistory({
@@ -26,15 +26,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       note: 'Resolved and awaiting citizen verification'
     });
     
-    const updated = updateIncident(incident.id, { status: 'awaiting_verification', updatedAt: new Date() });
+    const updated = updateIncident(incident.id, { status: 'awaiting_verification' });
     
     createNotification({
-      userId: incident.reportedBy,
+      userId: incident.userId,
       title: 'Incident Resolved - Please Verify',
       message: `Incident ${incident.incidentId} has been resolved. Please verify.`,
       read: false,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     });
+    persistStore();
     
     return NextResponse.json({ resolution, incident: updated });
   } catch (error) {

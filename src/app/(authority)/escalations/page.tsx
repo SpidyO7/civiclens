@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AlertOctagon, Clock, ShieldAlert, ChevronRight, MessageSquare, History } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { StatusChip } from '@/components/shared/StatusChip';
+import StatusChip from '@/components/shared/StatusChip';
 
 export default function EscalationsPage() {
   const [selectedEscalation, setSelectedEscalation] = useState<any | null>(null);

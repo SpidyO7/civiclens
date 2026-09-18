@@ -1,5 +1,6 @@
 import { haversineDistance } from '@/lib/utils';
 import { getJurisdictions, getDepartments } from '@/lib/db/queries';
+import { IncidentCategory } from '@/types';
 
 export interface RoutingResult {
   wardNumber: number | null;
@@ -25,14 +26,9 @@ export function routeIncident(lat: number, lng: number, category: string): Routi
   
   let targetDepartmentId = null;
   for (const d of departments) {
-    try {
-      const cats = JSON.parse(d.categories || '[]');
-      if (cats.includes(category)) {
-        targetDepartmentId = d.id;
-        break;
-      }
-    } catch (e) {
-      // ignore
+    if (d.categories.includes(category as IncidentCategory)) {
+      targetDepartmentId = d.id;
+      break;
     }
   }
   

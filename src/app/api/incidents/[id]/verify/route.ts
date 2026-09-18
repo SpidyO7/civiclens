@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateIncident, getIncidentById, getIncidentByIncidentId, addStatusHistory, createNotification, createVerification } from '@/lib/db/queries';
 import { getCurrentUserId } from '@/lib/auth';
+import { IncidentStatus } from '@/types';
+import { persistStore } from '@/lib/db';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -17,14 +19,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       comment
     });
     
-    const newStatus = verified ? 'verified_resolved' : 'reopened';
-    const transitionStatus = verified ? undefined : 'verification_failed';
+    const newStatus: IncidentStatus = verified ? 'verified_resolved' : 'reopened';
+    const transitionStatus: IncidentStatus | undefined = verified ? undefined : 'verification_failed';
     
     if (transitionStatus) {
       addStatusHistory({
         incidentId: incident.id,
         fromStatus: incident.status,
-        toStatus: transitionStatus as any,
+        toStatus: transitionStatus,
         changedBy: userId,
         note: comment
       });
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       note: comment
     });
     
-    const updated = updateIncident(incident.id, { status: newStatus, updatedAt: new Date() });
+    const updated = updateIncident(incident.id, { status: newStatus });
     
     if (incident.departmentId) {
        createNotification({
@@ -46,9 +48,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
          title: verified ? 'Verification Successful' : 'Verification Failed',
          message: `Incident ${incident.incidentId} verification ${verified ? 'successful' : 'failed'}.`,
          read: false,
-         createdAt: new Date()
+         createdAt: new Date().toISOString()
        });
     }
+    persistStore();
     
     return NextResponse.json(updated);
   } catch (error) {

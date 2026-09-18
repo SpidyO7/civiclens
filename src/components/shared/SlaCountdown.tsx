@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SlaCountdownProps {
-  deadline: string;
+  deadline?: string;
   breached: boolean;
 }
 
@@ -13,6 +13,11 @@ export default function SlaCountdown({ deadline, breached }: SlaCountdownProps) 
   
   useEffect(() => {
     const updateTime = () => {
+      if (!deadline) {
+        setTimeLeft('No SLA assigned');
+        return;
+      }
+
       if (breached) {
         setTimeLeft('SLA BREACHED');
         return;

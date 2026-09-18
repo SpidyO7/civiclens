@@ -13,9 +13,9 @@ import {
   X
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { StatusChip } from '@/components/shared/StatusChip';
-import { SeverityChip } from '@/components/shared/SeverityChip';
-import { SlaCountdown } from '@/components/shared/SlaCountdown';
+import StatusChip from '@/components/shared/StatusChip';
+import SeverityChip from '@/components/shared/SeverityChip';
+import SlaCountdown from '@/components/shared/SlaCountdown';
 import type { Incident } from '@/types';
 
 export default function IncidentsQueuePage() {
@@ -24,37 +24,9 @@ export default function IncidentsQueuePage() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
-    // Mock data
-    setIncidents([
-      {
-        id: 'INC-1234',
-        title: 'Massive pothole on Main St',
-        description: 'Large pothole causing traffic issues',
-        category: 'road',
-        location: { lat: 0, lng: 0, address: '123 Main St' },
-        severity: 'high',
-        status: 'overdue',
-        userId: 'user1',
-        createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        supportCount: 45,
-        slaDeadline: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
-      },
-      {
-        id: 'INC-1235',
-        title: 'Power outage in Sector 4',
-        description: 'No electricity since morning',
-        category: 'electricity',
-        location: { lat: 0, lng: 0, address: 'Sector 4, Park Ave' },
-        severity: 'critical',
-        status: 'reported',
-        userId: 'user2',
-        createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        supportCount: 120,
-        slaDeadline: new Date(Date.now() + 2 * 3600 * 1000).toISOString()
-      }
-    ] as any);
+    fetch('/api/incidents?limit=50')
+      .then(response => response.json())
+      .then(data => setIncidents(Array.isArray(data) ? data : []));
   }, []);
 
   const openActionPanel = (incident: Incident, e: React.MouseEvent) => {
@@ -116,18 +88,18 @@ export default function IncidentsQueuePage() {
                 <tr 
                   key={incident.id} 
                   className={`hover:bg-civic-50 transition-colors ${
-                    incident.status === 'overdue' ? 'border-l-4 border-l-red-500 bg-red-50/20' : ''
+                    incident.slaBreached ? 'border-l-4 border-l-red-500 bg-red-50/20' : ''
                   } ${incident.severity === 'critical' ? 'font-medium' : ''}`}
                 >
                   <td className="px-4 py-3">
-                    <div className="text-civic-900 font-medium">{incident.id}</div>
-                    <div className="text-civic-500 truncate max-w-[200px]">{incident.title}</div>
+                    <div className="text-civic-900 font-medium">{incident.incidentId}</div>
+                    <div className="text-civic-500 truncate max-w-[200px]">{incident.description}</div>
                   </td>
-                  <td className="px-4 py-3 truncate max-w-[150px]">{incident.location.address}</td>
+                  <td className="px-4 py-3 truncate max-w-[150px]">{incident.address}</td>
                   <td className="px-4 py-3"><SeverityChip severity={incident.severity} /></td>
                   <td className="px-4 py-3"><StatusChip status={incident.status} /></td>
                   <td className="px-4 py-3">
-                    {incident.slaDeadline && <SlaCountdown deadline={incident.slaDeadline} />}
+                    {incident.slaDeadline && <SlaCountdown deadline={incident.slaDeadline} breached={incident.slaBreached} />}
                   </td>
                   <td className="px-4 py-3 text-center">{incident.supportCount}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-civic-500">

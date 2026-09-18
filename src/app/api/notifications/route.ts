@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getNotifications, markNotificationRead } from '@/lib/db/queries';
 import { getCurrentUserId } from '@/lib/auth';
+import { persistStore } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const { id } = await request.json();
     markNotificationRead(id);
+    persistStore();
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to mark read' }, { status: 500 });

@@ -11,52 +11,26 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { StatusChip } from '@/components/shared/StatusChip';
-import { SeverityChip } from '@/components/shared/SeverityChip';
-import { SlaCountdown } from '@/components/shared/SlaCountdown';
+import StatusChip from '@/components/shared/StatusChip';
+import SeverityChip from '@/components/shared/SeverityChip';
+import SlaCountdown from '@/components/shared/SlaCountdown';
 import type { Incident } from '@/types';
+import type { DashboardStats } from '@/types';
 
 export default function AuthorityDashboard() {
   const router = useRouter();
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Mock data for display purposes
   useEffect(() => {
-    // In a real app, this would fetch from /api/analytics and /api/incidents
-    setTimeout(() => {
-      setIncidents([
-        {
-          id: 'INC-1234',
-          title: 'Massive pothole on Main St',
-          description: 'Large pothole causing traffic issues',
-          category: 'road',
-          location: { lat: 0, lng: 0, address: '123 Main St' },
-          severity: 'high',
-          status: 'overdue',
-          userId: 'user1',
-          createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-          supportCount: 45,
-          slaDeadline: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
-        },
-        {
-          id: 'INC-1235',
-          title: 'Power outage in Sector 4',
-          description: 'No electricity since morning',
-          category: 'electricity',
-          location: { lat: 0, lng: 0, address: 'Sector 4, Park Ave' },
-          severity: 'critical',
-          status: 'reported',
-          userId: 'user2',
-          createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-          supportCount: 120,
-          slaDeadline: new Date(Date.now() + 2 * 3600 * 1000).toISOString()
-        }
-      ] as any);
-      setLoading(false);
-    }, 500);
+    Promise.all([
+      fetch('/api/incidents?limit=10').then(response => response.json()),
+      fetch('/api/analytics').then(response => response.json()),
+    ]).then(([incidentData, analyticsData]) => {
+      setIncidents(Array.isArray(incidentData) ? incidentData : []);
+      setStats(analyticsData.stats || null);
+    }).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -70,12 +44,12 @@ export default function AuthorityDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard icon={<Activity />} title="Active" value="142" color="bg-blue-100 text-blue-700" />
-        <KpiCard icon={<ShieldAlert />} title="Critical" value="12" color="bg-red-100 text-red-700" />
-        <KpiCard icon={<Clock />} title="Overdue" value="8" color="bg-orange-100 text-orange-700" />
-        <KpiCard icon={<Activity />} title="In Progress" value="45" color="bg-amber-100 text-amber-700" />
-        <KpiCard icon={<CheckCircle />} title="Resolved" value="894" color="bg-green-100 text-green-700" />
-        <KpiCard icon={<UserCheck />} title="Verified" value="812" color="bg-emerald-100 text-emerald-700" />
+        <KpiCard icon={<Activity />} title="Active" value={String(stats?.activeIncidents ?? 0)} color="bg-blue-100 text-blue-700" />
+        <KpiCard icon={<ShieldAlert />} title="Critical" value={String(stats?.criticalIncidents ?? 0)} color="bg-red-100 text-red-700" />
+        <KpiCard icon={<Clock />} title="Overdue" value={String(stats?.overdueIncidents ?? 0)} color="bg-orange-100 text-orange-700" />
+        <KpiCard icon={<Activity />} title="In Progress" value={String(stats?.inProgressIncidents ?? 0)} color="bg-amber-100 text-amber-700" />
+        <KpiCard icon={<CheckCircle />} title="Resolved" value={String(stats?.resolvedIncidents ?? 0)} color="bg-green-100 text-green-700" />
+        <KpiCard icon={<UserCheck />} title="Verified" value={String(stats?.citizenVerified ?? 0)} color="bg-emerald-100 text-emerald-700" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -101,17 +75,17 @@ export default function AuthorityDashboard() {
                     key={incident.id} 
                     onClick={() => router.push(`/incident/${incident.id}`)}
                     className={`hover:bg-civic-50 cursor-pointer transition-colors ${
-                      incident.status === 'overdue' ? 'border-l-4 border-l-red-500 bg-red-50/30' : ''
+                      incident.slaBreached ? 'border-l-4 border-l-red-500 bg-red-50/30' : ''
                     } ${incident.severity === 'critical' ? 'font-medium' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <div className="text-civic-900 font-medium">{incident.id}</div>
-                      <div className="text-civic-500 truncate max-w-xs">{incident.title}</div>
+                      <div className="text-civic-900 font-medium">{incident.incidentId}</div>
+                      <div className="text-civic-500 truncate max-w-xs">{incident.description}</div>
                     </td>
                     <td className="px-4 py-3"><SeverityChip severity={incident.severity} /></td>
                     <td className="px-4 py-3"><StatusChip status={incident.status} /></td>
                     <td className="px-4 py-3">
-                      {incident.slaDeadline && <SlaCountdown deadline={incident.slaDeadline} />}
+                      {incident.slaDeadline && <SlaCountdown deadline={incident.slaDeadline} breached={incident.slaBreached} />}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-civic-500">
                       {formatDistanceToNow(new Date(incident.createdAt))} ago

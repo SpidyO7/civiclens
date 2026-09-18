@@ -14,7 +14,7 @@ interface TimelineProps {
 }
 
 export default function Timeline({ entries, currentStatus }: TimelineProps) {
-  const flow = ['reported', 'pending', 'in_progress', 'resolved', 'verified'];
+  const flow = ['reported', 'location_verified', 'classified', 'authority_notified', 'acknowledged', 'inspection', 'in_progress', 'repair_completed', 'awaiting_verification', 'verified_resolved'];
   
   return (
     <div className="relative border-l-2 border-gray-200 ml-3 space-y-6 my-6">

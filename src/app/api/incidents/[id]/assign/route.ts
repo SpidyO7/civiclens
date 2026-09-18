@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateIncident, getIncidentById, getIncidentByIncidentId, addStatusHistory, createNotification } from '@/lib/db/queries';
 import { getCurrentUserId } from '@/lib/auth';
+import { persistStore } from '@/lib/db';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -12,8 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     
     const updated = updateIncident(incident.id, { 
       departmentId: departmentId || incident.departmentId,
-      assignedTo: assignedToId || incident.assignedTo,
-      updatedAt: new Date() 
+      assignedToId: assignedToId || incident.assignedToId,
     });
     
     addStatusHistory({
@@ -30,9 +30,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         title: 'Incident Assigned',
         message: `Incident ${incident.incidentId} has been assigned to you.`,
         read: false,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       });
     }
+    persistStore();
     
     return NextResponse.json(updated);
   } catch (error) {

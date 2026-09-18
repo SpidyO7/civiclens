@@ -46,6 +46,17 @@ function MapEvents({ onClick }: { onClick?: (e: L.LeafletMouseEvent) => void }) 
   return null;
 }
 
+function MapRecenter({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, zoom);
+    map.invalidateSize();
+  }, [center, map, zoom]);
+
+  return null;
+}
+
 export default function MapView({ center, zoom, markers = [], className, onClick }: MapViewProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -67,6 +78,7 @@ export default function MapView({ center, zoom, markers = [], className, onClick
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapRecenter center={center} zoom={zoom} />
         <MapEvents onClick={onClick} />
         
         {markers.map((marker) => {

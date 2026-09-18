@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addIncidentSupport, getIncidentById, getIncidentByIncidentId } from '@/lib/db/queries';
 import { getCurrentUserId } from '@/lib/auth';
+import { persistStore } from '@/lib/db';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,9 +11,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const userId = getCurrentUserId();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     
-    addIncidentSupport(incident.id, userId);
+    const added = addIncidentSupport(incident.id, userId);
+    persistStore();
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, added, supportCount: getIncidentById(incident.id)?.supportCount ?? incident.supportCount });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to add support' }, { status: 500 });
   }

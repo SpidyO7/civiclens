@@ -4,6 +4,8 @@ import { routeIncident } from '@/lib/services/routing-engine';
 import { calculateSlaDeadline } from '@/lib/services/sla-engine';
 import { getCurrentUserId } from '@/lib/auth';
 import { generateIncidentId } from '@/lib/utils';
+import { IncidentStatus } from '@/types';
+import { persistStore } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { category, subcategory, description, latitude, longitude, address, imageUrl, severity, aiConfidence, aiCategory, aiSubcategory } = body;
+    const { category, subcategory, description, latitude, longitude, address, imageUrl, severity } = body;
     
     const incidentId = generateIncidentId();
     const routingInfo = routeIncident(latitude, longitude, category);
@@ -46,36 +48,33 @@ export async function POST(request: NextRequest) {
       address,
       imageUrl,
       severity,
-      aiConfidence,
-      aiCategory,
-      aiSubcategory,
-      departmentId: routingInfo.departmentId,
-      jurisdictionId: routingInfo.jurisdictionId,
-      wardNumber: routingInfo.wardNumber,
+      departmentId: routingInfo.departmentId ?? undefined,
+      wardNumber: routingInfo.wardNumber ?? undefined,
       slaDeadline,
       status: 'authority_notified',
-      reportedBy: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
     
-    const statuses = ['reported', 'location_verified', 'classified', 'authority_identified', 'forwarded', 'authority_notified'];
+    const statuses: IncidentStatus[] = ['reported', 'location_verified', 'classified', 'authority_identified', 'forwarded', 'authority_notified'];
     statuses.forEach(status => {
       addStatusHistory({
         incidentId: newIncident.id,
-        fromStatus: 'reported',
-        toStatus: status as any,
+      fromStatus: null,
+        toStatus: status,
         changedBy: 'system',
       });
     });
     
     createNotification({
-      userId: routingInfo.departmentId,
+      userId: routingInfo.departmentId || userId,
       title: 'New Incident Assigned',
       message: `Incident ${incidentId} has been assigned to your department.`,
       read: false,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     });
+    persistStore();
     
     return NextResponse.json({ ...newIncident, routingInfo });
   } catch (error) {

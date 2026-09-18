@@ -1,9 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Save, AlertTriangle, Database, Power } from 'lucide-react';
 
 export default function SettingsPage() {
+  const [seedMessage, setSeedMessage] = useState('');
+
+  const seedDemoData = async () => {
+    const response = await fetch('/api/seed', { method: 'POST' });
+    setSeedMessage(response.ok ? 'Demo data seeded.' : 'Demo data could not be seeded.');
+  };
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
@@ -101,10 +108,10 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold">Demo Controls & Developer Tools</h2>
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex flex-col items-center justify-center p-4 bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-700 font-medium transition-colors">
+          <button onClick={seedDemoData} className="flex flex-col items-center justify-center p-4 bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-700 font-medium transition-colors">
             <Database size={24} className="mb-2" />
             Seed Demo Data
-            <span className="text-xs font-normal text-red-500 mt-1">Generates random incidents</span>
+            <span className="text-xs font-normal text-red-500 mt-1">Loads deterministic demo incidents</span>
           </button>
           
           <button className="flex flex-col items-center justify-center p-4 bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-700 font-medium transition-colors">
@@ -119,6 +126,7 @@ export default function SettingsPage() {
             <span className="text-xs font-normal text-red-200 mt-1">Wipes all data</span>
           </button>
         </div>
+        {seedMessage && <p className="px-6 pb-6 text-sm text-red-700">{seedMessage}</p>}
       </div>
     </div>
   );

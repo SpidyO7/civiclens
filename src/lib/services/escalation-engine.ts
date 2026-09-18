@@ -20,6 +20,7 @@ export function escalateIncident(incidentId: string, currentLevel: number): Esca
     level: newLevel as 1 | 2 | 3 | 4,
     escalatedTo: target,
     reason: `SLA breach — incident unresolved at escalation level ${currentLevel}. Auto-escalated to level ${newLevel}.`,
+    status: 'active',
     escalatedAt: new Date().toISOString(),
   };
 

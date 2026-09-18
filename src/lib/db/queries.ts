@@ -137,6 +137,7 @@ export function createEscalation(data: Partial<Escalation>): Escalation {
     level: data.level!,
     escalatedTo: data.escalatedTo!,
     reason: data.reason!,
+    status: data.status || 'active',
     escalatedAt: data.escalatedAt || now,
     resolvedAt: data.resolvedAt,
   };

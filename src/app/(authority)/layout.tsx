@@ -11,7 +11,7 @@ import {
   Bell,
   Menu
 } from 'lucide-react';
-import { RoleSwitcher } from '@/components/shared/RoleSwitcher';
+import RoleSwitcher from '@/components/shared/RoleSwitcher';
 
 export default function AuthorityLayout({
   children,

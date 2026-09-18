@@ -31,6 +31,9 @@ export type IncidentStatus =
   | 'reopened'
   | 'closed';
 
+export type SlaStatus = 'on_track' | 'approaching' | 'breached';
+export type EscalationStatus = 'active' | 'resolved';
+
 export type EscalationLevel = 1 | 2 | 3 | 4;
 
 export interface User {
@@ -94,6 +97,13 @@ export interface Incident {
   updatedAt: string;
 }
 
+export interface IncidentSupport {
+  id: string;
+  incidentId: string;
+  userId: string;
+  createdAt: string;
+}
+
 export interface IncidentEvidence {
   id: string;
   incidentId: string;
@@ -120,9 +130,13 @@ export interface Escalation {
   level: EscalationLevel;
   escalatedTo: string;
   reason: string;
+  status: EscalationStatus;
   escalatedAt: string;
   resolvedAt?: string;
 }
+
+export type StatusHistory = StatusHistoryEntry;
+export type SLARule = SlaRule;
 
 export interface Resolution {
   id: string;
